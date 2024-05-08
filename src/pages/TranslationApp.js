@@ -5,23 +5,28 @@ function TranslationApp() {
   const [inputText, setInputText] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("");
   const [translationResult, setTranslationResult] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const translateText = async () => {
-    if (!inputText.trim()) return;
-
-    const encodedParams = new URLSearchParams();
-    encodedParams.set("q", inputText);
-    encodedParams.set("target", targetLanguage);
-
-    const options = {
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        "X-RapidAPI-Key": "44de684557mshcaec875048ee059p14a2b9jsn306762c41412",
-        "X-RapidAPI-Host": "google-translate1.p.rapidapi.com",
-      },
-    };
+    setIsLoading(true);
+    setError(null);
 
     try {
+      if (!inputText.trim()) return;
+
+      const encodedParams = new URLSearchParams();
+      encodedParams.set("q", inputText);
+      encodedParams.set("target", targetLanguage);
+
+      const options = {
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          "X-RapidAPI-Key": "44de684557mshcaec875048ee059p14a2b9jsn306762c41412",
+          "X-RapidAPI-Host": "google-translate1.p.rapidapi.com",
+        },
+      };
+
       const response = await axios.post(
         "https://google-translate1.p.rapidapi.com/language/translate/v2",
         encodedParams.toString(),
@@ -30,7 +35,9 @@ function TranslationApp() {
 
       setTranslationResult(response.data.data.translations[0]?.translatedText);
     } catch (error) {
-      console.error(error);
+      setError(error.message || "An error occurred during translation.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,28 +49,34 @@ function TranslationApp() {
     }, 1000);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [inputText, translateText]);
+  }, [inputText, targetLanguage]);
 
   const handleInputChange = (e) => {
     setInputText(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    translateText();
   };
 
   return (
     <div className="flex justify-center items-center h-screen bg-gradient-to-br from-indigo-500 to-purple-500">
       <div className="bg-white rounded-lg p-8 shadow-md">
         <h1 className="text-3xl font-bold mb-4 text-center">Translation Application</h1>
-        <textarea
-          value={inputText}
-          onChange={handleInputChange}
-          placeholder="Enter text to translate..."
-          className="w-full p-4 border border-gray-300 rounded-md shadow-md mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        ></textarea>
+        <form onSubmit={handleSubmit}>
+          <textarea
+            value={inputText}
+            onChange={handleInputChange}
+            placeholder="Enter text to translate..."
+            className="w-full p-4 border border-gray-300 rounded-md shadow-md mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          ></textarea>
 
-        <div className="mb-4">
-          <label htmlFor="targetLanguage" className="block mb-2 font-semibold">
-            Target Language:
-          </label>
-          <select
+          <div className="mb-4">
+            <label htmlFor="targetLanguage" className="block mb-2 font-semibold">
+              Target Language:
+            </label>
+            <select
           id="targetLanguage"
           value={targetLanguage}
           onChange={(e) => setTargetLanguage(e.target.value)}
@@ -176,10 +189,22 @@ function TranslationApp() {
           <option value="yo">Yoruba</option>
           <option value="zu">Zulu</option>
         </select>
-        </div>
-        <div id="translationResult" className="bg-gray-200 p-4 rounded-md shadow-md">
-          {translationResult}
-        </div>
+          </div>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              {isLoading ? "Translating..." : "Translate"}
+            </button>
+          </div>
+        </form>
+        {error && <div className="text-red-500 mt-4">{error}</div>}
+        {translationResult && (
+          <div id="translationResult" className="bg-gray-200 p-4 rounded-md shadow-md mt-4">
+            {translationResult}
+          </div>
+        )}
       </div>
     </div>
   );
