@@ -14,7 +14,7 @@ function TranslationApp() {
     }, 1000);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [inputText]);
+  }, [translateText, inputText]);
 
   const translateText = async () => {
     if (!inputText.trim()) return;
